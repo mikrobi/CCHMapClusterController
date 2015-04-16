@@ -92,7 +92,6 @@
     return zoomScale;
 }
 
-
 + (double) distanceSquared:(MKMapPoint)a b:(MKMapPoint)b {
     return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
 }
@@ -140,8 +139,7 @@
         
         CCHMapClusterAnnotation *cluster;
         if (_reuseExistingClusterAnnotations) {
-            NSSet *visibleAnnotationsInSearchBounds = [_visibleAnnotationsMapTree annotationsInMapRect:searchBounds];
-            cluster = CCHMapClusterControllerFindVisibleAnnotation([NSSet setWithObject:candidate], visibleAnnotationsInSearchBounds);
+            cluster = CCHMapClusterControllerFindVisibleAnnotation([NSSet setWithObject:candidate], _visibleAnnotationsMapTree.annotations);
         }
         if (cluster == nil) {
             cluster = [[CCHMapClusterAnnotation alloc] init];
@@ -195,15 +193,21 @@
         [visitedCandidates addObjectsFromArray:[annotationsInSearchBounds allObjects]];
     }
     
+    //set center coordinate of clusters
+    CCHCenterOfMassMapClusterer *clusterer = [[CCHCenterOfMassMapClusterer alloc] init];
+    NSMutableSet *nonReusedClusters = [NSMutableSet setWithSet:clusters];
+    
     dispatch_async(dispatch_get_main_queue(), ^{
-        //set center coordinate of clusters
-        for (CCHMapClusterAnnotation *cluster in clusters) {
-            CCHCenterOfMassMapClusterer *clusterer = [[CCHCenterOfMassMapClusterer alloc] init];
+        [nonReusedClusters minusSet:reusedClusters];
+        for (CCHMapClusterAnnotation *cluster in nonReusedClusters) {
             cluster.coordinate = [clusterer mapClusterController:_clusterController coordinateForAnnotations:cluster.annotations inMapRect:MKMapRectNull];
         }
-        
         //update annotation view's of clusters that we've reused
         for (CCHMapClusterAnnotation *cluster in reusedClusters) {
+            CLLocationCoordinate2D center = [clusterer mapClusterController:_clusterController coordinateForAnnotations:cluster.annotations inMapRect:MKMapRectNull];
+            if (cluster.coordinate.latitude != center.latitude || cluster.coordinate.longitude != center.longitude) {
+                cluster.coordinate = center;
+            }
             cluster.title = nil;
             cluster.subtitle = nil;
             if (respondsToSelector) {
