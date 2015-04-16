@@ -32,20 +32,6 @@
 #define fequal(a, b) (fabs((a) - (b)) < __FLT_EPSILON__)
 #define GEOHASH_LENGTH 9
 
-MKMapRect CCHMapClusterControllerAlignMapRectToCellSize(MKMapRect mapRect, double cellSize)
-{
-    if (cellSize == 0) {
-        return MKMapRectNull;
-    }
-
-    double startX = floor(MKMapRectGetMinX(mapRect) / cellSize) * cellSize;
-    double startY = floor(MKMapRectGetMinY(mapRect) / cellSize) * cellSize;
-    double endX = ceil(MKMapRectGetMaxX(mapRect) / cellSize) * cellSize;
-    double endY = ceil(MKMapRectGetMaxY(mapRect) / cellSize) * cellSize;
-    
-    return MKMapRectMake(startX, startY, endX - startX, endY - startY);
-}
-
 CCHMapClusterAnnotation *CCHMapClusterControllerFindVisibleAnnotation(NSSet *annotations, NSSet *visibleAnnotations)
 {
     for (id<MKAnnotation> annotation in annotations) {
@@ -120,28 +106,6 @@ CCHMapClusterAnnotation *CCHMapClusterControllerClusterAnnotationForAnnotation(M
     }
     
     return annotationResult;
-}
-
-void CCHMapClusterControllerEnumerateCells(MKMapRect mapRect, double cellSize, void (^block)(MKMapRect cellMapRect))
-{
-    NSCAssert(block != NULL, @"Block argument can't be NULL");
-    if (block == nil) {
-        return;
-    }
-    
-    MKMapRect cellRect = MKMapRectMake(0, MKMapRectGetMinY(mapRect), cellSize, cellSize);
-    while (MKMapRectGetMinY(cellRect) < MKMapRectGetMaxY(mapRect)) {
-        cellRect.origin.x = MKMapRectGetMinX(mapRect);
-        
-        while (MKMapRectGetMinX(cellRect) < MKMapRectGetMaxX(mapRect)) {
-            // Wrap around the origin's longitude
-            MKMapRect rect = MKMapRectMake(fmod(cellRect.origin.x, MKMapSizeWorld.width), cellRect.origin.y, cellRect.size.width, cellRect.size.height);
-            block(rect);
-            
-            cellRect.origin.x += MKMapRectGetWidth(cellRect);
-        }
-        cellRect.origin.y += MKMapRectGetWidth(cellRect);
-    }
 }
 
 MKMapRect CCHMapClusterControllerMapRectForCoordinateRegion(MKCoordinateRegion coordinateRegion)

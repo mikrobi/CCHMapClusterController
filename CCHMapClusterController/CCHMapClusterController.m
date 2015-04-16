@@ -69,7 +69,7 @@
     self = [super init];
     if (self) {
         _marginFactor = 0.5;
-        _cellSize = 60;
+        _clusterSize = 60;
         _maxZoomLevelForClustering = DBL_MAX;
         _mapView = mapView;
         _allAnnotations = [NSMutableSet new];
@@ -174,7 +174,7 @@
     [self cancelAllClusterOperations];
     
     CCHMapClusterOperation *operation = [[CCHMapClusterOperation alloc] initWithMapView:self.mapView
-                                                                               cellSize:self.cellSize
+                                                                            clusterSize:self.clusterSize
                                                                            marginFactor:self.marginFactor
                                                         reuseExistingClusterAnnotations:self.reuseExistingClusterAnnotations
                                                               maxZoomLevelForClustering:self.maxZoomLevelForClustering
@@ -195,42 +195,6 @@
     };
     
     [self.backgroundQueue addOperation:operation];
-    
-    // Debugging
-    if (self.isDebuggingEnabled) {
-        double cellMapSize = [CCHMapClusterOperation cellMapSizeForCellSize:self.cellSize withMapView:self.mapView];
-        MKMapRect gridMapRect = [CCHMapClusterOperation gridMapRectForMapRect:self.mapView.visibleMapRect withCellMapSize:cellMapSize marginFactor:self.marginFactor];
-        [self updateDebugPolygonsInGridMapRect:gridMapRect withCellMapSize:cellMapSize];
-    }
-}
-
-- (void)updateDebugPolygonsInGridMapRect:(MKMapRect)gridMapRect withCellMapSize:(double)cellMapSize
-{
-    MKMapView *mapView = self.mapView;
-    
-    // Remove old polygons
-    for (id<MKOverlay> overlay in mapView.overlays) {
-        if ([overlay isKindOfClass:CCHMapClusterControllerDebugPolygon.class]) {
-            CCHMapClusterControllerDebugPolygon *debugPolygon = (CCHMapClusterControllerDebugPolygon *)overlay;
-            if (debugPolygon.mapClusterController == self) {
-                [mapView removeOverlay:overlay];
-            }
-        }
-    }
-    
-    // Add polygons outlining each cell
-    CCHMapClusterControllerEnumerateCells(gridMapRect, cellMapSize, ^(MKMapRect cellMapRect) {
-        //        cellMapRect.origin.x -= MKMapSizeWorld.width;  // fixes issue when view port spans 180th meridian
-        
-        MKMapPoint points[4];
-        points[0] = MKMapPointMake(MKMapRectGetMinX(cellMapRect), MKMapRectGetMinY(cellMapRect));
-        points[1] = MKMapPointMake(MKMapRectGetMaxX(cellMapRect), MKMapRectGetMinY(cellMapRect));
-        points[2] = MKMapPointMake(MKMapRectGetMaxX(cellMapRect), MKMapRectGetMaxY(cellMapRect));
-        points[3] = MKMapPointMake(MKMapRectGetMinX(cellMapRect), MKMapRectGetMaxY(cellMapRect));
-        CCHMapClusterControllerDebugPolygon *debugPolygon = (CCHMapClusterControllerDebugPolygon *)[CCHMapClusterControllerDebugPolygon polygonWithPoints:points count:4];
-        debugPolygon.mapClusterController = self;
-        [mapView addOverlay:debugPolygon];
-    });
 }
 
 - (void)deselectAllAnnotations

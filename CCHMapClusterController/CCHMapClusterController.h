@@ -43,7 +43,7 @@
 /** Multiplier to extend visible area that's included for clustering (default: 0.5). */
 @property (nonatomic) double marginFactor;
 /** Cell size in [points] (default: 60). */
-@property (nonatomic) double cellSize;
+@property (nonatomic) double clusterSize;
 
 /** The current zoom level of the visible map region. A zoom level of 0 means that the entire map fits
  the screen width. The value increases while zooming in. */

@@ -72,7 +72,7 @@
     
     // Map cluster controller settings
     self.mapClusterControllerRed.debuggingEnabled = settings.isDebuggingEnabled;
-    self.mapClusterControllerRed.cellSize = settings.cellSize;
+    self.mapClusterControllerRed.clusterSize = settings.cellSize;
     self.mapClusterControllerRed.marginFactor = settings.marginFactor;
     
     if (settings.clusterer == SettingsClustererCenterOfMass) {
@@ -97,7 +97,7 @@
         }
         
         self.mapClusterControllerBlue.debuggingEnabled = settings.isDebuggingEnabled;
-        self.mapClusterControllerBlue.cellSize = settings.cellSize + 20;
+        self.mapClusterControllerBlue.clusterSize = settings.cellSize + 20;
         self.mapClusterControllerBlue.marginFactor = settings.marginFactor;
         self.mapClusterControllerBlue.clusterer = self.mapClusterer;
         self.mapClusterControllerBlue.maxZoomLevelForClustering = settings.maxZoomLevelForClustering;

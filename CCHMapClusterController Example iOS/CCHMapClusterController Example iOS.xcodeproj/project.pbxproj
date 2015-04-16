@@ -24,7 +24,6 @@
 		6217D6EF18BDD97400CDB8C3 /* CCHCenterOfMassMapClustererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6E518BDD97400CDB8C3 /* CCHCenterOfMassMapClustererTests.m */; };
 		6217D6F018BDD97400CDB8C3 /* CCHFadeInOutMapAnimatorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6E618BDD97400CDB8C3 /* CCHFadeInOutMapAnimatorTests.m */; };
 		6217D6F118BDD97400CDB8C3 /* CCHMapClusterAnnotationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6E718BDD97400CDB8C3 /* CCHMapClusterAnnotationTests.m */; };
-		6217D6F218BDD97400CDB8C3 /* CCHMapClusterControllerPerformanceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6E818BDD97400CDB8C3 /* CCHMapClusterControllerPerformanceTests.m */; };
 		6217D6F318BDD97400CDB8C3 /* CCHMapClusterControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6E918BDD97400CDB8C3 /* CCHMapClusterControllerTests.m */; };
 		6217D6F418BDD97400CDB8C3 /* CCHMapClusterControllerUtilsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6EA18BDD97400CDB8C3 /* CCHMapClusterControllerUtilsTests.m */; };
 		6217D6F518BDD97400CDB8C3 /* CCHMapTreeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6217D6EB18BDD97400CDB8C3 /* CCHMapTreeTests.m */; };
@@ -100,7 +99,6 @@
 		6217D6E518BDD97400CDB8C3 /* CCHCenterOfMassMapClustererTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHCenterOfMassMapClustererTests.m; path = "../../CCHMapClusterController Tests/CCHCenterOfMassMapClustererTests.m"; sourceTree = "<group>"; };
 		6217D6E618BDD97400CDB8C3 /* CCHFadeInOutMapAnimatorTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHFadeInOutMapAnimatorTests.m; path = "../../CCHMapClusterController Tests/CCHFadeInOutMapAnimatorTests.m"; sourceTree = "<group>"; };
 		6217D6E718BDD97400CDB8C3 /* CCHMapClusterAnnotationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHMapClusterAnnotationTests.m; path = "../../CCHMapClusterController Tests/CCHMapClusterAnnotationTests.m"; sourceTree = "<group>"; };
-		6217D6E818BDD97400CDB8C3 /* CCHMapClusterControllerPerformanceTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHMapClusterControllerPerformanceTests.m; path = "../../CCHMapClusterController Tests/CCHMapClusterControllerPerformanceTests.m"; sourceTree = "<group>"; };
 		6217D6E918BDD97400CDB8C3 /* CCHMapClusterControllerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHMapClusterControllerTests.m; path = "../../CCHMapClusterController Tests/CCHMapClusterControllerTests.m"; sourceTree = "<group>"; };
 		6217D6EA18BDD97400CDB8C3 /* CCHMapClusterControllerUtilsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHMapClusterControllerUtilsTests.m; path = "../../CCHMapClusterController Tests/CCHMapClusterControllerUtilsTests.m"; sourceTree = "<group>"; };
 		6217D6EB18BDD97400CDB8C3 /* CCHMapTreeTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CCHMapTreeTests.m; path = "../../CCHMapClusterController Tests/CCHMapTreeTests.m"; sourceTree = "<group>"; };
@@ -288,7 +286,6 @@
 				6217D6E518BDD97400CDB8C3 /* CCHCenterOfMassMapClustererTests.m */,
 				6217D6E618BDD97400CDB8C3 /* CCHFadeInOutMapAnimatorTests.m */,
 				6217D6E718BDD97400CDB8C3 /* CCHMapClusterAnnotationTests.m */,
-				6217D6E818BDD97400CDB8C3 /* CCHMapClusterControllerPerformanceTests.m */,
 				6217D6E918BDD97400CDB8C3 /* CCHMapClusterControllerTests.m */,
 				6217D6EA18BDD97400CDB8C3 /* CCHMapClusterControllerUtilsTests.m */,
 				6217D6EB18BDD97400CDB8C3 /* CCHMapTreeTests.m */,
@@ -481,7 +478,6 @@
 				48899957185CE2B000F3D6ED /* QTreeGeometryUtils.m in Sources */,
 				6217D6F618BDD97400CDB8C3 /* CCHMapViewDelegateProxyTests.m in Sources */,
 				4889995A185D175000F3D6ED /* QCluster.m in Sources */,
-				6217D6F218BDD97400CDB8C3 /* CCHMapClusterControllerPerformanceTests.m in Sources */,
 				6217D6EF18BDD97400CDB8C3 /* CCHCenterOfMassMapClustererTests.m in Sources */,
 				48899956185CE2B000F3D6ED /* QTree.m in Sources */,
 				48D7B0CA185A679F0071636B /* KPTreeNode.m in Sources */,

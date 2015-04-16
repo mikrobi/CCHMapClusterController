@@ -34,23 +34,6 @@
 
 @implementation CCHMapClusterControllerUtilsTests
 
-- (void)testAlignToCellSize
-{
-    MKMapRect mapRect = MKMapRectMake(0, 0, 15, 20);
-    MKMapRect adjustedMapRect = CCHMapClusterControllerAlignMapRectToCellSize(mapRect, 5);
-    XCTAssertEqual(adjustedMapRect.origin.x, 0.0);
-    XCTAssertEqual(adjustedMapRect.origin.y, 0.0);
-    XCTAssertEqual(adjustedMapRect.size.width, 15.0);
-    XCTAssertEqual(adjustedMapRect.size.height, 20.0);
-
-    mapRect = MKMapRectMake(8, 8, 15, 20);
-    adjustedMapRect = CCHMapClusterControllerAlignMapRectToCellSize(mapRect, 6);
-    XCTAssertEqual(adjustedMapRect.origin.x, 6.0);
-    XCTAssertEqual(adjustedMapRect.origin.y, 6.0);
-    XCTAssertEqual(adjustedMapRect.size.width, 18.0);
-    XCTAssertEqual(adjustedMapRect.size.height, 24.0);
-}
-
 - (void)testFindVisibleAnnotation
 {
     MKPointAnnotation *pointAnnotation = [[MKPointAnnotation alloc] init];
@@ -255,32 +238,6 @@
     
     CCHMapClusterAnnotation *mapClusterAnnotationFound = CCHMapClusterControllerClusterAnnotationForAnnotation(mapView, annotation, mapRect);
     XCTAssertEqualObjects(mapClusterAnnotation0, mapClusterAnnotationFound);
-}
-
-- (void)testEnumerateCells
-{
-    MKMapRect mapRect = MKMapRectMake(0, 0, 100, 100);
-    __block NSUInteger numCalls = 0;
-    CCHMapClusterControllerEnumerateCells(mapRect, 10, ^(MKMapRect cellRect) {
-        numCalls++;
-        
-        XCTAssertEqualWithAccuracy(cellRect.size.height, 10, __FLT_EPSILON__);
-        XCTAssertEqualWithAccuracy(cellRect.size.width, 10, __FLT_EPSILON__);
-    });
-    XCTAssertEqual(numCalls, (NSUInteger)100);
-}
-
-- (void)testEnumerateCellsAlign
-{
-    MKMapRect mapRect = MKMapRectMake(0, 0, 95, 95);
-    __block NSUInteger numCalls = 0;
-    CCHMapClusterControllerEnumerateCells(mapRect, 10, ^(MKMapRect cellRect) {
-        numCalls++;
-        
-        XCTAssertEqualWithAccuracy(cellRect.size.height, 10, __FLT_EPSILON__);
-        XCTAssertEqualWithAccuracy(cellRect.size.width, 10, __FLT_EPSILON__);
-    });
-    XCTAssertEqual(numCalls, (NSUInteger)100);
 }
 
 - (void)testMapRectForCoordinateRegion

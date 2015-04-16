@@ -29,7 +29,6 @@
 @class CCHMapClusterAnnotation;
 @class CCHMapClusterController;
 
-MKMapRect CCHMapClusterControllerAlignMapRectToCellSize(MKMapRect mapRect, double cellSize);
 CCHMapClusterAnnotation *CCHMapClusterControllerFindVisibleAnnotation(NSSet *annotations, NSSet *visibleAnnotations);
 #if TARGET_OS_IPHONE
 double CCHMapClusterControllerMapLengthForLength(MKMapView *mapView, UIView *view, double length);
@@ -39,7 +38,6 @@ double CCHMapClusterControllerMapLengthForLength(MKMapView *mapView, NSView *vie
 double CCHMapClusterControllerAlignMapLengthToWorldWidth(double mapLength);
 BOOL CCHMapClusterControllerCoordinateEqualToCoordinate(CLLocationCoordinate2D coordinate0, CLLocationCoordinate2D coordinate1);
 CCHMapClusterAnnotation *CCHMapClusterControllerClusterAnnotationForAnnotation(MKMapView *mapView, id<MKAnnotation> annotation, MKMapRect mapRect);
-void CCHMapClusterControllerEnumerateCells(MKMapRect mapRect, double cellSize, void (^block)(MKMapRect cellMapRect));
 MKMapRect CCHMapClusterControllerMapRectForCoordinateRegion(MKCoordinateRegion coordinateRegion);
 NSSet *CCHMapClusterControllerClusterAnnotationsForAnnotations(NSArray *annotations, CCHMapClusterController *mapClusterController);
 double CCHMapClusterControllerZoomLevelForRegion(CLLocationDegrees longitudeCenter, CLLocationDegrees longitudeDelta, CGFloat width);
