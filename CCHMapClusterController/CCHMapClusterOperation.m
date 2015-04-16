@@ -195,22 +195,22 @@
         [visitedCandidates addObjectsFromArray:[annotationsInSearchBounds allObjects]];
     }
     
-    //set center coordinate of clusters
-    for (CCHMapClusterAnnotation *cluster in clusters) {
-        CCHCenterOfMassMapClusterer *clusterer = [[CCHCenterOfMassMapClusterer alloc] init];
-        cluster.coordinate = [clusterer mapClusterController:_clusterController coordinateForAnnotations:cluster.annotations inMapRect:MKMapRectNull];
-    }
-    
-    //update annotation view's of clusters that we've reused
-    for (CCHMapClusterAnnotation *cluster in reusedClusters) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        //set center coordinate of clusters
+        for (CCHMapClusterAnnotation *cluster in clusters) {
+            CCHCenterOfMassMapClusterer *clusterer = [[CCHCenterOfMassMapClusterer alloc] init];
+            cluster.coordinate = [clusterer mapClusterController:_clusterController coordinateForAnnotations:cluster.annotations inMapRect:MKMapRectNull];
+        }
+        
+        //update annotation view's of clusters that we've reused
+        for (CCHMapClusterAnnotation *cluster in reusedClusters) {
             cluster.title = nil;
             cluster.subtitle = nil;
             if (respondsToSelector) {
                 [_clusterControllerDelegate mapClusterController:_clusterController willReuseMapClusterAnnotation:cluster];
             }
-        });
-    }
+        }
+    });
     
     // Figure out difference between new and old clusters
     NSSet *annotationsBeforeAsSet = CCHMapClusterControllerClusterAnnotationsForAnnotations(self.mapViewAnnotations, self.clusterController);
