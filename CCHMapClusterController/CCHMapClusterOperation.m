@@ -76,31 +76,6 @@
     return self;
 }
 
-- (MKMapRect)clusteringMapRect
-{
-    MKMapRect visibleMapRect = _mapView.visibleMapRect;
-    MKMapRect mapRect = MKMapRectInset(visibleMapRect, -_marginFactor * visibleMapRect.size.width, -_marginFactor * visibleMapRect.size.height);
-    return MKMapRectIntersection(mapRect, MKMapRectWorld);
-}
-
-- (MKZoomScale) currentZoomScale
-{
-    CGSize screenSize = _mapView.bounds.size;
-    MKMapRect mapRect = _mapView.visibleMapRect;
-    MKZoomScale zoomScale = screenSize.width / mapRect.size.width;
-    return zoomScale;
-}
-
-+ (double) distanceSquared:(MKMapPoint)a b:(MKMapPoint)b {
-    return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
-}
-
-
-+ (MKMapRect) createBoundsFromSpan:(MKMapPoint)p span:(double)span {
-    double halfSpan = span / 2;
-    return MKMapRectMake(p.x - halfSpan, p.y - halfSpan, span, span);
-}
-
 - (void)start
 {
     _executing = YES;
@@ -118,7 +93,6 @@
     
     // The MKAnnotations (single POIs and clusters alike) we want on display
     NSMutableSet *clusters = [[NSMutableSet alloc] init];
-    NSMutableSet *reusedClusters = [[NSMutableSet alloc] init];
     
     // Map a single POI MKAnnotation to its distance (NSNumber*) from its cluster (if added to one yet)
     NSMapTable *distanceToCluster = [NSMapTable strongToStrongObjectsMapTable];
@@ -126,36 +100,22 @@
     // Map a single POI MKAnnotation to its cluster annotation (if added to one yet)
     NSMapTable *itemToCluster = [NSMapTable strongToStrongObjectsMapTable];
     
-    NSSet *allAnnotationsInGrid = [_allAnnotationsMapTree annotationsInMapRect:[self clusteringMapRect]];
-    NSMutableSet *reusableAnnotations = [NSMutableSet setWithSet:_visibleAnnotationsMapTree.annotations];
-    
-    for (id<MKAnnotation> candidate in allAnnotationsInGrid) {
+    NSSet *annotationsInClusteringMapRect = [_allAnnotationsMapTree annotationsInMapRect:[self clusteringMapRect]];
+    for (id<MKAnnotation> candidate in annotationsInClusteringMapRect) {
         if ([visitedCandidates containsObject:candidate]) {
             continue;
         }
         
         MKMapPoint point = MKMapPointForCoordinate(candidate.coordinate);
-        MKMapRect searchBounds = [self.class createBoundsFromSpan:point span:zoomSpecificSpan];
+        MKMapRect searchBounds = CCHMapClusterControllerCreateBoundsFromSpan(point, zoomSpecificSpan);
         
-        CCHMapClusterAnnotation *cluster;
-        if (_reuseExistingClusterAnnotations) {
-            cluster = CCHMapClusterControllerFindVisibleAnnotation([NSSet setWithObject:candidate], reusableAnnotations);
-        }
-        if (cluster == nil) {
-            cluster = [[CCHMapClusterAnnotation alloc] init];
-            cluster.mapClusterController = _clusterController;
-            cluster.delegate = _clusterControllerDelegate;
-        } else {
-            [reusableAnnotations removeObject:cluster];
-            [reusedClusters addObject:cluster];
-        }
-        cluster.annotations = [[NSSet alloc] init];
+        NSMutableSet *cluster = [NSMutableSet set];
         [clusters addObject:cluster];
         
         NSSet *annotationsInSearchBounds = [_allAnnotationsMapTree annotationsInMapRect:searchBounds];
         if (disableClustering || annotationsInSearchBounds.count == 1) {
             // Only the current candidate is in range.
-            cluster.annotations = [cluster.annotations setByAddingObject:candidate];
+            [cluster addObject:candidate];
             [visitedCandidates addObject:candidate];
             [distanceToCluster setObject:[NSNumber numberWithDouble:0.0] forKey:candidate];
             continue;
@@ -168,7 +128,7 @@
             NSNumber *existingDistance = [distanceToCluster objectForKey:annotation];
             
             // Get distance from the new cluster location we're working on
-            double distance = [self.class distanceSquared:MKMapPointForCoordinate(annotation.coordinate) b:MKMapPointForCoordinate(candidate.coordinate)];
+            double distance = CCHMapClusterControllerDistanceSquared(annotation.coordinate, candidate.coordinate);
             
             if (existingDistance != nil) {
                 // Item already belongs to another cluster. Check if it's closer to this cluster.
@@ -176,17 +136,15 @@
                     continue;
                 }
                 // Remove from previous cluster.
-                CCHMapClusterAnnotation *prevCluster = [itemToCluster objectForKey:annotation];
+                NSMutableSet *prevCluster = [itemToCluster objectForKey:annotation];
                 if (prevCluster != nil) {
-                    NSMutableSet *set = [NSMutableSet setWithSet:prevCluster.annotations];
-                    [set minusSet:[NSSet setWithObject:annotation]];
-                    prevCluster.annotations = set;
+                    [prevCluster removeObject:annotation];
                 }
             }
             // Record new distance
             [distanceToCluster setObject:[NSNumber numberWithDouble:distance] forKey:annotation];
             // Add item to the cluster we're working on
-            cluster.annotations = [cluster.annotations setByAddingObject:annotation];
+            [cluster addObject:annotation];
             // Update mapping in our item-to-cluster map.
             [itemToCluster setObject:cluster forKey:annotation];
         }
@@ -194,38 +152,47 @@
         [visitedCandidates addObjectsFromArray:[annotationsInSearchBounds allObjects]];
     }
     
-    //set center coordinate of clusters
+    NSMutableSet *clusterAnnotations = [NSMutableSet set];
+    NSMutableSet *reusableAnnotations = [NSMutableSet setWithSet:_visibleAnnotationsMapTree.annotations];
     CCHCenterOfMassMapClusterer *clusterer = [[CCHCenterOfMassMapClusterer alloc] init];
-    NSMutableSet *nonReusedClusters = [NSMutableSet setWithSet:clusters];
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [nonReusedClusters minusSet:reusedClusters];
-        for (CCHMapClusterAnnotation *cluster in nonReusedClusters) {
-            cluster.coordinate = [clusterer mapClusterController:_clusterController coordinateForAnnotations:cluster.annotations inMapRect:MKMapRectNull];
+    for (NSSet *annotations in clusters) {
+        CLLocationCoordinate2D center = [clusterer mapClusterController:_clusterController coordinateForAnnotations:annotations inMapRect:MKMapRectNull];
+        CCHMapClusterAnnotation *clusterAnnotation;
+        if (_reuseExistingClusterAnnotations) {
+            clusterAnnotation = CCHMapClusterControllerFindResuableClusterAnnotation(annotations, reusableAnnotations);
         }
-        //update annotation view's of clusters that we've reused
-        for (CCHMapClusterAnnotation *cluster in reusedClusters) {
-            CLLocationCoordinate2D center = [clusterer mapClusterController:_clusterController coordinateForAnnotations:cluster.annotations inMapRect:MKMapRectNull];
-            if (cluster.coordinate.latitude != center.latitude || cluster.coordinate.longitude != center.longitude) {
-                cluster.coordinate = center;
-            }
-            cluster.title = nil;
-            cluster.subtitle = nil;
-            if (respondsToSelector) {
-                [_clusterControllerDelegate mapClusterController:_clusterController willReuseMapClusterAnnotation:cluster];
-            }
+        if (clusterAnnotation == nil) {
+            clusterAnnotation = [[CCHMapClusterAnnotation alloc] init];
+            clusterAnnotation.mapClusterController = _clusterController;
+            clusterAnnotation.delegate = _clusterControllerDelegate;
+            clusterAnnotation.coordinate = center;
+            clusterAnnotation.annotations = annotations;
+        } else {
+            [reusableAnnotations removeObject:clusterAnnotation];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                clusterAnnotation.annotations = annotations;
+                if (clusterAnnotation.coordinate.latitude != center.latitude || clusterAnnotation.coordinate.longitude != center.longitude) {
+                    clusterAnnotation.coordinate = center;
+                }
+                clusterAnnotation.title = nil;
+                clusterAnnotation.subtitle = nil;
+                if (respondsToSelector) {
+                    [_clusterControllerDelegate mapClusterController:_clusterController willReuseMapClusterAnnotation:clusterAnnotation];
+                }
+            });
         }
-    });
+        [clusterAnnotations addObject:clusterAnnotation];
+    }
     
     // Figure out difference between new and old clusters
     NSSet *annotationsBeforeAsSet = CCHMapClusterControllerClusterAnnotationsForAnnotations(self.mapViewAnnotations, self.clusterController);
     NSMutableSet *annotationsToKeep = [NSMutableSet setWithSet:annotationsBeforeAsSet];
-    [annotationsToKeep intersectSet:clusters];
-    NSMutableSet *annotationsToAddAsSet = [NSMutableSet setWithSet:clusters];
+    [annotationsToKeep intersectSet:clusterAnnotations];
+    NSMutableSet *annotationsToAddAsSet = [NSMutableSet setWithSet:clusterAnnotations];
     [annotationsToAddAsSet minusSet:annotationsToKeep];
     NSArray *annotationsToAdd = [annotationsToAddAsSet allObjects];
     NSMutableSet *annotationsToRemoveAsSet = [NSMutableSet setWithSet:annotationsBeforeAsSet];
-    [annotationsToRemoveAsSet minusSet:clusters];
+    [annotationsToRemoveAsSet minusSet:clusterAnnotations];
     NSArray *annotationsToRemove = [annotationsToRemoveAsSet allObjects];
     
     // Show cluster annotations on map
@@ -260,6 +227,46 @@
     [self willChangeValueForKey:@"isFinished"];
     _finished = YES;
     [self didChangeValueForKey:@"isFinished"];
+}
+
+#pragma mark - Private Helpers
+
+- (MKMapRect)clusteringMapRect
+{
+    MKMapRect visibleMapRect = _mapView.visibleMapRect;
+    MKMapRect mapRect = MKMapRectInset(visibleMapRect, -_marginFactor * visibleMapRect.size.width, -_marginFactor * visibleMapRect.size.height);
+    return MKMapRectIntersection(mapRect, MKMapRectWorld);
+}
+
+- (MKZoomScale) currentZoomScale
+{
+    CGSize screenSize = _mapView.bounds.size;
+    MKMapRect mapRect = _mapView.visibleMapRect;
+    MKZoomScale zoomScale = screenSize.width / mapRect.size.width;
+    return zoomScale;
+}
+
+double CCHMapClusterControllerDistanceSquared(CLLocationCoordinate2D coordA, CLLocationCoordinate2D coordB) {
+    MKMapPoint a = MKMapPointForCoordinate(coordA);
+    MKMapPoint b = MKMapPointForCoordinate(coordB);
+    return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+}
+
+
+MKMapRect CCHMapClusterControllerCreateBoundsFromSpan(MKMapPoint p, double span) {
+    double halfSpan = span / 2;
+    return MKMapRectMake(p.x - halfSpan, p.y - halfSpan, span, span);
+}
+
+CCHMapClusterAnnotation *CCHMapClusterControllerFindResuableClusterAnnotation(NSSet *annotations, NSSet *resuableClusterAnnotations)
+{
+    for (CCHMapClusterAnnotation *clusterAnnotation in resuableClusterAnnotations) {
+        // we only want to reuse an existing cluster annotation if we haven't removed any annotations from the cluster
+        if([annotations isSubsetOfSet:clusterAnnotation.annotations]) {
+            return clusterAnnotation;
+        }
+    }
+    return nil;
 }
 
 @end
