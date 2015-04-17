@@ -128,6 +128,7 @@
     NSMapTable *itemToCluster = [NSMapTable strongToStrongObjectsMapTable];
     
     NSSet *allAnnotationsInGrid = [_allAnnotationsMapTree annotationsInMapRect:[self clusteringMapRect]];
+    NSMutableSet *reusableAnnotations = [NSMutableSet setWithSet:_visibleAnnotationsMapTree.annotations];
     
     for (id<MKAnnotation> candidate in allAnnotationsInGrid) {
         if ([visitedCandidates containsObject:candidate]) {
@@ -139,13 +140,14 @@
         
         CCHMapClusterAnnotation *cluster;
         if (_reuseExistingClusterAnnotations) {
-            cluster = CCHMapClusterControllerFindVisibleAnnotation([NSSet setWithObject:candidate], _visibleAnnotationsMapTree.annotations);
+            cluster = CCHMapClusterControllerFindVisibleAnnotation([NSSet setWithObject:candidate], reusableAnnotations);
         }
         if (cluster == nil) {
             cluster = [[CCHMapClusterAnnotation alloc] init];
             cluster.mapClusterController = _clusterController;
             cluster.delegate = _clusterControllerDelegate;
         } else {
+            [reusableAnnotations removeObject:cluster];
             [reusedClusters addObject:cluster];
         }
         cluster.annotations = [[NSSet alloc] init];
