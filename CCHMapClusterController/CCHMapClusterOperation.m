@@ -79,9 +79,8 @@
 - (MKMapRect)clusteringMapRect
 {
     MKMapRect visibleMapRect = _mapView.visibleMapRect;
-    MKMapRect gridMapRect = MKMapRectInset(visibleMapRect, -_marginFactor * visibleMapRect.size.width, -_marginFactor * visibleMapRect.size.height);
-    
-    return gridMapRect;
+    MKMapRect mapRect = MKMapRectInset(visibleMapRect, -_marginFactor * visibleMapRect.size.width, -_marginFactor * visibleMapRect.size.height);
+    return MKMapRectIntersection(mapRect, MKMapRectWorld);
 }
 
 - (MKZoomScale) currentZoomScale
