@@ -31,6 +31,7 @@
 #import "CCHCenterOfMassMapClusterer.h"
 #import "CCHMapAnimator.h"
 #import "CCHMapClusterControllerDelegate.h"
+#import "MKAnnotation+CCHClusterTracker.h"
 
 @interface CCHMapClusterOperation()
 
@@ -152,8 +153,9 @@
         [visitedCandidates addObjectsFromArray:[annotationsInSearchBounds allObjects]];
     }
     
+    NSSet *annotationsBeforeAsSet = CCHMapClusterControllerClusterAnnotationsForAnnotations(self.mapViewAnnotations, self.clusterController);
     NSMutableSet *clusterAnnotations = [NSMutableSet set];
-    NSMutableSet *reusableAnnotations = [NSMutableSet setWithSet:_visibleAnnotationsMapTree.annotations];
+    NSMutableSet *reusableAnnotations =[NSMutableSet setWithSet:annotationsBeforeAsSet];
     CCHCenterOfMassMapClusterer *clusterer = [[CCHCenterOfMassMapClusterer alloc] init];
     for (NSSet *annotations in clusters) {
         CLLocationCoordinate2D center = [clusterer mapClusterController:_clusterController coordinateForAnnotations:annotations inMapRect:MKMapRectNull];
@@ -185,7 +187,6 @@
     }
     
     // Figure out difference between new and old clusters
-    NSSet *annotationsBeforeAsSet = CCHMapClusterControllerClusterAnnotationsForAnnotations(self.mapViewAnnotations, self.clusterController);
     NSMutableSet *annotationsToKeep = [NSMutableSet setWithSet:annotationsBeforeAsSet];
     [annotationsToKeep intersectSet:clusterAnnotations];
     NSMutableSet *annotationsToAddAsSet = [NSMutableSet setWithSet:clusterAnnotations];
@@ -194,6 +195,19 @@
     NSMutableSet *annotationsToRemoveAsSet = [NSMutableSet setWithSet:annotationsBeforeAsSet];
     [annotationsToRemoveAsSet minusSet:clusterAnnotations];
     NSArray *annotationsToRemove = [annotationsToRemoveAsSet allObjects];
+    
+    CCHMapClusterControllerSetRelatedCluster(annotationsToAdd);
+    
+    for (CCHMapClusterAnnotation *clusterAnnotation in annotationsToKeep) {
+        [clusterAnnotation cch_setCluster:nil];
+    }
+    for (CCHMapClusterAnnotation *clusterAnnotation in clusterAnnotations) {
+        for (NSObject<MKAnnotation> *annotation in clusterAnnotation.annotations) {
+            [annotation cch_setCluster:clusterAnnotation];
+        }
+    }
+    
+    CCHMapClusterControllerSetRelatedCluster(annotationsToRemove);
     
     // Show cluster annotations on map
     [_visibleAnnotationsMapTree removeAnnotations:annotationsToRemove];
@@ -267,6 +281,23 @@ CCHMapClusterAnnotation *CCHMapClusterControllerFindResuableClusterAnnotation(NS
         }
     }
     return nil;
+}
+
+void CCHMapClusterControllerSetRelatedCluster(NSSet *clusterAnnotations) {
+    for (CCHMapClusterAnnotation *clusterAnnotation in clusterAnnotations) {
+        CCHMapClusterAnnotation *relatedCluster;
+        BOOL firstInterationInLoop = YES;
+        for (NSObject<MKAnnotation> *annotation in clusterAnnotation.annotations) {
+            CCHMapClusterAnnotation *previousCluster = [annotation cch_cluster];
+            if (firstInterationInLoop) {
+                relatedCluster = previousCluster;
+            } else if (relatedCluster != previousCluster){
+                relatedCluster = nil;
+            }
+            firstInterationInLoop = NO;
+        }
+        [clusterAnnotation cch_setCluster:relatedCluster];
+    }
 }
 
 @end
